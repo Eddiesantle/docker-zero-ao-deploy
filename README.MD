@@ -31,3 +31,61 @@ A imagem destaca os seguintes pontos importantes sobre o Docker:
 - Os containers Docker compartilham o kernel do sistema operacional host, representado pela base comum na imagem.
 - Os containers Docker são mais leves que as VMs, pois não emulam um sistema operacional completo.
 - Os containers Docker são portáteis e podem ser executados em qualquer ambiente que tenha o Docker Engine instalado.
+
+## OBJETIVO PRÁTICO
+
+Implementar uma aplicação do workpress com mysql com docker
+
+#### wordpress - php
+
+Escolher versão da Imagem do wordpress
+https://hub.docker.com/_/wordpress/tags
+
+Executando container isolado possui seu próprio sistema de arquivos, sua própria rede e sua própria árvore de processos isolada, separada do host(isolado da minha maquina)
+
+```
+docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
+```
+
+Referência da imagem é o nome e a versão da imagem wordpress
+
+```
+docker run wordpress:php8.3-fpm-alpine
+```
+
+Mostrar contêineres em execução e parados (-a, --all)
+
+```
+docker ps -a
+```
+
+##### Container - efemero: Efêmero é um termo de origem grega (em que "ephémeros" significa "apenas por um dia") usado para designar uma situação que dura muito pouco tempo.
+
+Parar contêiner docker
+
+```
+docker stop my_container
+```
+
+Mapeamento de portas
+Para realizar o mapeamento de portas basta saber qual porta será mapeada no host e qual deve receber essa conexão dentro do container.
+
+- -p 8080:80 mapeia a porta 80 do container para a porta 8080 do host
+
+```
+docker run -p "<host>:<container>"
+```
+
+Não foi possivel acessar a porta com a versão "php8.3-fpm-alpine", alteramos para a versão "6.5.4-php8.3-apache"
+
+```
+docker run -p 8080:80 wordpress:6.5.4-php8.3-apache
+```
+
+Possivel acessar conteiner http://localhost:8080/
+
+<img src="assets/doker-run-wordpress.png">
+
+Para informar os detalhes de conexão do banco de dados. Vamos rodar container do banco de dados em mysql para concluir a configuração do wordpress
+
+#### Banco de dados - mysql
