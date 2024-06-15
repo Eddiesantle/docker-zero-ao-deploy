@@ -1,4 +1,15 @@
-# Docker do Zero ao Deploy
+# WordPress com MySQL Utilizando Docker
+
+Este repositório contém instruções detalhadas para configurar e executar uma aplicação WordPress com um banco de dados MySQL usando Docker e Docker Compose, com a finalidade de praticar e documentar processos.
+
+## Introdução
+Este projeto visa demonstrar como implementar e executar uma aplicação WordPress integrada com um banco de dados MySQL utilizando contêineres Docker. A configuração é feita de forma a garantir o isolamento dos componentes e a persistência dos dados.
+
+## Pré-requisitos
+Antes de iniciar, certifique-se de que você possui os seguintes softwares instalados no seu sistema:
+
+- Docker: Utilizado para criar e gerenciar contêineres.
+- Docker Compose: Ferramenta para orquestrar múltiplos contêineres.
 
 ## Diferença de containers vs máquinas virtuais (VMs)
 
@@ -32,11 +43,16 @@ A imagem destaca os seguintes pontos importantes sobre o Docker:
 - Os containers Docker são mais leves que as VMs, pois não emulam um sistema operacional completo.
 - Os containers Docker são portáteis e podem ser executados em qualquer ambiente que tenha o Docker Engine instalado.
 
-## OBJETIVO PRÁTICO
+## OBJETIVO PRÁTICO - Guia de Implementação: WordPress e MySQL com Docker
 
-Implementar uma aplicação do workpress com mysql com docker
+Este documento tem como objetivo praticar e orientar sobre a implementação de uma aplicação WordPress utilizando MySQL, ambos rodando em contêineres Docker, garantindo isolamento, facilidade de configuração e manutenção.
 
-### Docker
+1. Pré-requisitos
+      Antes de começar, certifique-se de que você tem as seguintes ferramentas instaladas:
+      - Docker: para criar e gerenciar contêineres.
+      - Docker Compose: para orquestrar múltiplos contêineres.
+
+### 2. Implementação com Docker
 
 #### wordpress - php
 
@@ -49,7 +65,7 @@ Executando container isolado possui seu próprio sistema de arquivos, sua própr
 docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
 ```
 
-Referência da imagem é o nome e a versão da imagem wordpress
+Executando o Contêiner do WordPress
 
 ```
 docker run wordpress:php8.3-fpm-alpine
@@ -83,6 +99,11 @@ Não foi possivel acessar a porta com a versão "php8.3-fpm-alpine", alteramos p
 ```
 docker run -p 8080:80 wordpress:6.5.4-php8.3-apache
 ```
+
+Observações:
+
+- -p 8080:80: Mapeia a porta 80 do contêiner para a porta 8080 do host.
+- wordpress:6.5.4-php8.3-apache: Especifica a imagem e a versão a serem utilizadas
 
 Possivel acessar conteiner http://localhost:8080/
 
@@ -290,7 +311,7 @@ PROBLEMA: Ao subir novamente os container todas as informações e banco de dado
 1. Solução: Volume
    volume ==== storage - compartilhado entre sua maquina e container
 
-##### VOLUME
+##### VOLUME - Melhorando a Persistência de Dados
 
 Os volumes são o mecanismo preferido para persistir dados gerados e usados ​​por contêineres Docker. Embora as montagens de ligação dependam da estrutura de diretórios e do sistema operacional da máquina host, os volumes são totalmente gerenciados pelo Docker. Os volumes têm diversas vantagens sobre montagens vinculadas:
 
@@ -314,7 +335,7 @@ services:
 
 Fazer configuração wordpress para verificar a mantebilidade dos dados
 
-Mesmo realizando a remoção dos container, apos reiniciar ele mantem as informações do banco de dados
+Mesmo após reiniciar os contêineres, os dados devem ser preservados devido ao uso de volumes.
 ```
 docker compose down
 ```
@@ -342,4 +363,29 @@ services:
 
 ```
 
-Cria o volume para preservar os dados do container
+Os volumes garantem que, ao reiniciar os contêineres, os dados do WordPress e do MySQL sejam preservados
+
+<img src="./assets/wordpress-project.png">
+
+##### FERRAMENTA: Dev Containers
+
+Os contêineres de desenvolvimento ou contêineres de des são contêineres do Docker configurados especificamente para fornecer um ambiente de desenvolvimento completo.
+
+https://code.visualstudio.com/docs/devcontainers/containers
+
+Dev Containers vai conectar o vscode no ambiente do container, como se fosse codar dentro do container
+
+##### Conclusão
+
+Através desse guia, foi realizado na pratica como implementar uma aplicação WordPress com MySQL utilizando Docker e Docker Compose. Isso inclui desde a escolha das imagens, execução e conexão dos contêineres até a persistência de dados e utilização de redes Docker para comunicação entre os contêineres. Para otimizar seu ambiente de desenvolvimento, considere o uso de Dev Containers.
+
+Notas Finais:
+
+- Certifique-se de manter suas imagens e contêineres atualizados.
+- Utilize boas práticas de segurança ao configurar seus serviços e bancos de dados.
+Para mais informações e suporte, consulte a documentação oficial do Docker e WordPress.
+
+##### Referências
+Docker Documentation(https://docs.docker.com/)
+WordPress Docker Image (https://hub.docker.com/_/wordpress)
+MySQL Docker Image (https://hub.docker.com/_/mysql)
