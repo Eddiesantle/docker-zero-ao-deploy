@@ -88,4 +88,116 @@ Possivel acessar conteiner http://localhost:8080/
 
 Para informar os detalhes de conexão do banco de dados. Vamos rodar container do banco de dados em mysql para concluir a configuração do wordpress
 
+##### Comando ps no Linux (visualiza processos)
+
+Saber quais são os processos que mais consomem a CPU:
+
+```linux
+ps aux
+```
+
+Processos do container, rodando na minha maquina, reusando compartilhando os recursos do meu sistema operacional, mais leve do que a virtualização.
+
+<img src="assets/ps-aux-docker.png" >
+
 #### Banco de dados - mysql
+
+Escolher versão da Imagem do mysql
+https://hub.docker.com/_/mysql/tags
+
+Referência da imagem é o nome e a versão da imagem mysql
+
+```
+docker run mysql:8.0.30-debian
+```
+
+O banco de dados não foi inicializado e a opção de senha não foi especificada
+Você precisa especificar um dos seguintes:
+-MYSQL_ROOT_PASSWORD
+-MYSQL_ALLOW_EMPTY_PASSWORD
+-MYSQL_RANDOM_ROOT_PASSWORD
+
+Definir variavel de ambiente (-e)
+
+```
+docker run -e MYSQL_ROOT_PASSWORD=root mysql:8.0.30-debian
+```
+
+Mostrar container em execução
+
+```
+docker ps
+```
+
+<img src="assets/docker-ps-exec.png">
+
+O docker exec comando executa um novo comando em um contêiner em execução. Em seguida, execute um bash interativo no contêiner.
+
+```
+docker exec -it my_container bash
+```
+
+Acessando mysql dentro do container
+
+```
+mysql -uroot -proot
+```
+
+<img src="assets/mysql-container.png">
+
+Criar uma base de dados para conextar com wordpress
+
+```mysql
+create database test;
+```
+
+Após informar os detalhes de conexão do banco de dados retorna error
+<img src="assets/error-db-wordpress.png">
+
+##### O que aconteceu??
+
+o local informado nos detalhes de conexão do banco de dados, se refere ao localhost do container onde esta rodando o wordpress, de forma isolada, onde mysql esta rodando em outro conteiner... sendo assim não é possivel conectar ao mysql
+
+1. Solução: Identificar o ip do container
+
+Docker inspecionar fornece informações detalhadas sobre construções controladas pelo Docker.
+
+```
+docker inspect mycontainer
+```
+
+Retorna IP do container que esta rodando na maquina.
+
+```
+"IPAddress": "172.17.0.2"
+```
+
+Colocar ip no campo "Servidor do banco de dados", porem não é uma boa pratica, após reiniciar o container o ip pode ser diferente
+
+Por isso é melhor trabalhar com nome, os endereços na internet não são acessados por IP mas sim por nome e o DNS faz a conversão para o IP
+
+2. Solução: DNS para comunicação entre containers(network)
+
+#### Criar Rede Container (network)
+
+Você pode criar redes personalizadas definidas pelo usuário e conectar vários contêineres à mesma rede. Uma vez conectados a uma rede definida pelo usuário, os contêineres podem se comunicar entre si usando endereços IP ou nomes de contêineres.
+
+<img src="assets/bridge2.png">
+
+O exemplo a seguir cria uma rede:
+
+```
+docker network create wordpress-net
+```
+
+Executando contêiner do wordpress na rede criada(wordpress-net)
+
+```
+docker run -p 8080:80 --network wordpress-net wordpress:6.5.4-php8.3-apache
+```
+
+Executando contêiner do mysql na rede criada(wordpress-net)
+
+```
+docker run --network wordpress-net -e MYSQL_ROOT_PASSWORD=root mysql:8.0.30-debian
+```
