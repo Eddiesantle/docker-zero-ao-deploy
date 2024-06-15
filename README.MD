@@ -36,6 +36,8 @@ A imagem destaca os seguintes pontos importantes sobre o Docker:
 
 Implementar uma aplicação do workpress com mysql com docker
 
+### Docker
+
 #### wordpress - php
 
 Escolher versão da Imagem do wordpress
@@ -196,8 +198,148 @@ Executando contêiner do wordpress na rede criada(wordpress-net)
 docker run -p 8080:80 --network wordpress-net wordpress:6.5.4-php8.3-apache
 ```
 
-Executando contêiner do mysql na rede criada(wordpress-net)
+Executando contêiner do mysql na rede criada(wordpress-net) e definir nome para o container(--name mysqlwithdocker)
 
 ```
-docker run --network wordpress-net -e MYSQL_ROOT_PASSWORD=root mysql:8.0.30-debian
+docker run --name mysqlwithdocker --network wordpress-net -e MYSQL_ROOT_PASSWORD=root mysql:8.0.30-debian
 ```
+
+```
+CONTAINER ID   IMAGE                           COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+e3ab7912a8f2   mysql:8.0.30-debian             "docker-entrypoint.s…"   22 seconds ago   Up 20 seconds   3306/tcp, 33060/tcp                     mysqlwithdocker
+dc23e753a58c   wordpress:6.5.4-php8.3-apache   "docker-entrypoint.s…"   25 seconds ago   Up 24 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   wonderful_mccarthy
+```
+
+##### Container estão na mesma rede
+
+Criar novo banco de dados e conectar ao wordpress
+
+<img src="assets/mysql-config-db.png">
+
+o nome do servidor do banco de dados pode ser justamente o nome do container do mysql (mysqlwithdocker), por estar na mesma rede ele pode ser acessivel pelo nome
+
+```
+CONTAINER ID   IMAGE                           COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+e3ab7912a8f2   mysql:8.0.30-debian             "docker-entrypoint.s…"   22 seconds ago   Up 20 seconds   3306/tcp, 33060/tcp                     mysqlwithdocker
+dc23e753a58c   wordpress:6.5.4-php8.3-apache   "docker-entrypoint.s…"   25 seconds ago   Up 24 seconds   0.0.0.0:8080->80/tcp, :::8080->80/tcp   wonderful_mccarthy
+```
+
+Pronto foi possivel se conectar ao banco de dados
+<img src="assets/config-success-wordpress.png">
+
+<img src="assets/welcome-wordpress.png">
+
+##### Como melhorar as execuções do conteiner, toda vez q reinicia perde os dados?
+
+### Docker Compose
+
+https://docs.docker.com/compose/
+
+Docker Compose é uma ferramenta para definir e executar aplicativos com vários contêineres. É a chave para desbloquear uma experiência de desenvolvimento e implantação simplificada e eficiente.
+
+Criar manifesto configuração inicial
+
+```docker-compose.yaml
+services:
+  wordpress:
+    image: wordpress:6.5.4-php8.3-apache
+    ports:
+      - 8080:80
+
+  mysql:
+    image: mysql:8.0.30-debian
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+```
+
+OBS: Não sera preciso criar a rede pois o docker compose cria uma rede padrão entre os containers
+
+##### Executar os dois containers
+
+```
+docker compose up
+```
+
+Para informar os detalhes de conexão do banco de dados. nome do servidor do banco de dados é o proprio nome do container definido no docker-compose.yaml nomeado como (mysql)
+<img src="assets/mysql-docker-compose-config.png">
+
+```
+NAME                                IMAGE                           COMMAND                  SERVICE     CREATED         STATUS                      PORTS
+docker-zero-ao-deploy-mysql-1       mysql:8.0.30-debian             "docker-entrypoint.s…"   mysql       6 minutes ago   Exited (0) 34 seconds ago
+docker-zero-ao-deploy-wordpress-1   wordpress:6.5.4-php8.3-apache   "docker-entrypoint.s…"   wordpress   6 minutes ago   Exited (0) 34 seconds ago
+```
+
+##### Matar containers
+
+Interrompe contêineres e remove contêineres, redes, volumes e imagens criadas pelo up.
+
+```
+docker compose down
+```
+
+```
+[+] Running 3/3
+ ✔ Container docker-zero-ao-deploy-mysql-1      Removed                                                                                                                                                                0.0s
+ ✔ Container docker-zero-ao-deploy-wordpress-1  Removed                                                                                                                                                                0.0s
+ ✔ Network docker-zero-ao-deploy_default        Removed
+```
+
+PROBLEMA: Ao subir novamente os container todas as informações e banco de dados se perder(limpa) iniciando do zero
+
+1. Solução: Volume
+   volume ==== storage - compartilhado entre sua maquina e container
+
+##### VOLUME
+
+Os volumes são o mecanismo preferido para persistir dados gerados e usados ​​por contêineres Docker. Embora as montagens de ligação dependam da estrutura de diretórios e do sistema operacional da máquina host, os volumes são totalmente gerenciados pelo Docker. Os volumes têm diversas vantagens sobre montagens vinculadas:
+
+Incluir no manifesto  - volume (./mysql-data:/var/lib/mysql)
+
+```docker-compose.yaml
+services:
+  wordpress:
+    image: wordpress:6.5.4-php8.3-apache
+    ports:
+      - 8080:80
+
+  mysql:
+    image: mysql:8.0.30-debian
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+```
+
+Fazer configuração wordpress para verificar a mantebilidade dos dados
+
+Mesmo realizando a remoção dos container, apos reiniciar ele mantem as informações do banco de dados
+```
+docker compose down
+```
+
+Manteve os dados do mysql, porem o wordpress tambem precisa manter os dados
+
+Incluir no manifesto - volume (./wordpress:/var/www/html)
+
+```docker-compose.yaml
+services:
+  wordpress:
+    image: wordpress:6.5.4-php8.3-apache
+    ports:
+      - 8080:80
+    volumes:
+      - ./wordpress:/var/www/html
+
+  mysql:
+    image: mysql:8.0.30-debian
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+
+```
+
+Cria o volume para preservar os dados do container
